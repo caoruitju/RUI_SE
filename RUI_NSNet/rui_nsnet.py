@@ -40,7 +40,6 @@ class CausalTransConvBlock(nn.Module):
 
     def forward(self, x):
         """
-        因果反卷积
         :param x: B,C,F,T
         :return:
         """
@@ -121,19 +120,15 @@ class IntegralAttention(nn.Module):
         )
 
     def forward(self, x):
-        # 谐波积分模块
-        v = self.v_convs(x)  # B,C*n_head,T,F 得到V
-        k = self.k_convs(x ** 2)  # B,C*n_head,T,F 得到K
-        atten = torch.matmul(k, self.u)  # B,C*n_head,T,candidates K和Q的Matmul
-
-        atten = torchF.softmax(atten, dim=-1) # softmax
-        # softmax后与Q做矩阵乘法。这里可以联想一下HGCN里面，我们这一步当时是做的 argmax 来选择的。其实用矩阵乘法就能做到“选择”
-
-        # H对应了我们HGCN里面的谐波的位置，具体可以放大那个可视化的图，里面是有谐波的
+        # Harmonic integration
+        v = self.v_convs(x)  # B,C*n_head,T,F -> V
+        k = self.k_convs(x ** 2)  # B,C*n_head,T,F -> K
+        atten = torch.matmul(k, self.u)  # B,C*n_head,T,candidates
+        atten = torchF.softmax(atten, dim=-1) 
         H = torch.matmul(atten, self.u.permute(0, 1, 3, 2))
-        choosed = self.choosed_convs(H)  # B,C*n_head,F,T 参数化调整一下
-        v = choosed * v # 谐波的位置*V，得到谐波的调整数值
-        return self.out_convs(v) # 输出前再做一次调整
+        choosed = self.choosed_convs(H)  # B,C*n_head,F,T
+        v = choosed * v 
+        return self.out_convs(v)
 
 class HarmonicAttention(torch.nn.Module):
     def __init__(self, in_ch, out_ch, conv_ker, u_path, n_head, integral_atten=True, CFFusion=True, freq_dim=256):
@@ -174,8 +169,6 @@ class HarmonicAttention(torch.nn.Module):
         """
         s = self.in_norm(s.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)  # BCFT->BTCF->BCFT
 
-        # 第一个卷积模块，主要用来提升模型的通道的，U-NET这种模式的处理模型涉及到通道数量的改变
-        # 如果通道数量变了，就不做残差，没变就做
         if self.conv_res:
             s = self.in_conv(s) + s
         else:
@@ -183,28 +176,26 @@ class HarmonicAttention(torch.nn.Module):
         B, C, F, T = s.size()
         s_ = s.permute(0, 1, 3, 2)  # B,C,T,F
 
-        # 开始做谐波积分
         if self.integral_atten:
-            ia = self.ln0(s_) # 对能量做一下归一化
-            s_ = s_ + self.integral_attention(ia)  # B,C,T,F 注意这里是有残差的，所以后面那个模块就是需要调整的谐波的数值
+            ia = self.ln0(s_) 
+            s_ = s_ + self.integral_attention(ia)  # B,C,T,F 
 
         if self.CFFusion:
-            # 沿着通道的attention
+            # channel attention
             ch_atten = self.ln1(s_).permute(1, 0, 2, 3).reshape(self.out_ch, -1, F)  # C,B*T,F
             ch_atten = self.channel_atten(ch_atten, ch_atten, ch_atten)[0]
             ch_atten = ch_atten.reshape(self.out_ch, B, T, F).permute(1, 0, 2, 3)
             s_ = s_ + ch_atten
 
-            # 沿着频域的attention
+            # frequency attention
             f_atten = self.ln2(s_.permute(3, 0, 2, 1).reshape(F, -1, self.out_ch))  # F,B*T,C
             f_atten = self.f_atten(f_atten, f_atten, f_atten)[0]
             f_atten = f_atten.reshape(F, B, T, self.out_ch).permute(1, 3, 2, 0)
             s_ = s_ + f_atten
 
-        # 时域建模
+        # temporal modeling
         # out = self.t_module(s_).permute(0, 1, 3, 2)  # BCTF->BCFT
         out = self.dprnn(s_.permute(0, 1, 3, 2))
-        # print(f'out {out.shape}')
         return out
 
 class RUI_NSNet(nn.Module):
@@ -261,10 +252,10 @@ class RUI_NSNet(nn.Module):
     def forward(self, x):
         # x : B, T
         real, imag = stft_splitter(x, n_fft=self.nfft, hop_len=self.hop_len)
-        spec_complex = torch.stack([real, imag], dim=1)[:, :, :-1]  # B,2,256,T
+        spec_complex = torch.stack([real, imag], dim=1)[:, :, :-1]  # B,2,F,T
         out = spec_complex
 
-        feature_head = self.extractor(out) # B,12,256,T
+        feature_head = self.extractor(out) # B,12,F,T
 
         real = real.permute(0, 2, 1)
         imag = imag.permute(0, 2, 1)
@@ -279,14 +270,14 @@ class RUI_NSNet(nn.Module):
 
         '''multiple refinement iterations'''
         refinement_out = torch.stack([real_result[:,:-1,:], imag_result[:,:-1,:]], dim= 1)
-        residual = torch.stack([real_result[:,:-1,:], imag_result[:,:-1,:]], dim= 1) # B,2,256,T
+        residual = torch.stack([real_result[:,:-1,:], imag_result[:,:-1,:]], dim= 1) # B,2,F,T
         for idx in range(self.iter_num):
             feature_input = torch.cat((feature_head, residual),dim = 1)
             refinement = self.refinement[idx](feature_input)
             '''S-path'''
             residual = residual - refinement.detach()
             '''A-path'''
-            refinement_out = refinement_out + refinement # B,2,256,T
+            refinement_out = refinement_out + refinement # B,2,F,T
         refinement_out = F.pad(refinement_out, [0, 0, 0, 1], value=1e-8)
 
         return stft_mixer(refinement_out[:,0], refinement_out[:,1], n_fft=self.fft_len, hop_len=self.hop_len)
