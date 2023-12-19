@@ -3,7 +3,7 @@
 The official repo of "A Refining Underlying Information Framework for Speech Enhancement", which was submitted to SPL. 
 
 
-> ### Due to space constraints, detailed descriptions of individual modules in the framework cannot be provided in the paper. We have open-sourced the framework to assist readers in understanding. In the code, the xxxPLUS represents using xxx as the PEM in RUI.
+> ### Due to the space limit of the paper, we develop a detailed description in the form of open source code.
 
 
 
