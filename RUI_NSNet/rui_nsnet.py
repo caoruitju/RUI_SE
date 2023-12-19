@@ -207,12 +207,14 @@ class HarmonicAttention(torch.nn.Module):
         # print(f'out {out.shape}')
         return out
 
-class NsNet2PLUS(nn.Module):
+class RUI_NSNet(nn.Module):
     def __init__(self, nfft=512, hop_len=128):
-        super(NsNet2PLUS, self).__init__()
+        super(RUI_NSNet, self).__init__()
         self.nfft = nfft
         self.hop_len = hop_len
         self.fft_len = 512
+
+        '''Pre_enhancement module(PEM)'''
         self.encoder = nn.Sequential(
             nn.Linear(257, 400),
             nn.PReLU(),
@@ -233,9 +235,17 @@ class NsNet2PLUS(nn.Module):
             nn.Sigmoid()
         )
 
+        '''Underlying information extractor(UIE)'''
+        self.extractor = nn.Sequential(
+            HarmonicAttention(in_ch=2, out_ch=6, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
+                              integral_atten=True, CFFusion=False),
+            HarmonicAttention(in_ch=6, out_ch=12, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
+                              integral_atten=True, CFFusion=False)
+        )
+
         ''' Refinement'''
         self.refinement = nn.ModuleList()
-        iter_num = 4
+        iter_num = 4  ## total number of refinement iterations
         self.iter_num = iter_num
         n_head_num = 4 
         self.conv_ker = (5, 2)
@@ -247,14 +257,6 @@ class NsNet2PLUS(nn.Module):
                 CausalConv(6, 2, kernel_size=self.conv_ker, stride=(1, 1))
             ))
 
-
-        '''Underlying information extractor'''
-        self.extractor = nn.Sequential(
-            HarmonicAttention(in_ch=2, out_ch=6, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
-                              integral_atten=True, CFFusion=False),
-            HarmonicAttention(in_ch=6, out_ch=12, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
-                              integral_atten=True, CFFusion=False)
-        )
 
     def forward(self, x):
         # x : B, T

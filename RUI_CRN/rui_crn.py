@@ -215,12 +215,11 @@ class CausalTransConvBlock(nn.Module):
         return conv_out
 
 
-class CRNPLUS(nn.Module):
+class RUI_CRN(nn.Module):
     def __init__(self, rnn_hidden=128, win_len=512, hop_len=128, fft_len=512, win_type='hanning',
                  kernel_size=5, kernel_num=(16, 32, 64, 128, 128, 128)):
-        super(CRNPLUS, self).__init__()
+        super(RUI_CRN, self).__init__()
         self.rnn_hidden = rnn_hidden
-
         self.win_len = win_len
         self.hop_len = hop_len
         self.fft_len = fft_len
@@ -229,6 +228,7 @@ class CRNPLUS(nn.Module):
         self.kernel_size = kernel_size
         self.kernel_num = (2,) + kernel_num
 
+        ''' Pre_enhancement module(PEM)'''
         self.encoder = nn.ModuleList()
         self.decoder = nn.ModuleList()
 
@@ -287,10 +287,17 @@ class CRNPLUS(nn.Module):
         if isinstance(self.enhance, nn.LSTM):
             self.enhance.flatten_parameters()
 
+        '''Underlying information extractor'''
+        self.extractor = nn.Sequential(
+            HarmonicAttention(in_ch=2, out_ch=6, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
+                              integral_atten=True, CFFusion=False),
+            HarmonicAttention(in_ch=6, out_ch=12, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
+                              integral_atten=True, CFFusion=False)
+        )
 
         ''' Refinement'''
         self.refinement = nn.ModuleList()
-        iter_num = 4
+        iter_num = 4  ## total number of refinement iterations
         self.iter_num = iter_num
         n_head_num = 4 
         self.conv_ker = (5, 2)
@@ -301,15 +308,6 @@ class CRNPLUS(nn.Module):
                                   integral_atten=True, CFFusion=True),
                 CausalConv(6, 2, kernel_size=self.conv_ker, stride=(1, 1))
             ))
-
-
-        '''Underlying information extractor'''
-        self.extractor = nn.Sequential(
-            HarmonicAttention(in_ch=2, out_ch=6, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
-                              integral_atten=True, CFFusion=False),
-            HarmonicAttention(in_ch=6, out_ch=12, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
-                              integral_atten=True, CFFusion=False)
-        )
 
     def forward(self, x):
         real, imag = stft_splitter(x, n_fft=self.fft_len, hop_len=self.hop_len)
