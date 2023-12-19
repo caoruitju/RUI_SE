@@ -198,7 +198,6 @@ class CausalTransConvBlock(nn.Module):
 
     def forward(self, x):
         """
-        因果反卷积
         :param x: B,C,F,T
         :return:
         """
