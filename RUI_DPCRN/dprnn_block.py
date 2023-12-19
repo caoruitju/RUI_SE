@@ -1,6 +1,6 @@
 # coding: utf-8
-# Author：WangTianRui
-# Date ：2021/11/21 12:20
+# Author：Rui Cao, TianRui Wang
+# Date ：2023/12/19 
 import torch
 
 

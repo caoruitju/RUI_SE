@@ -1,6 +1,6 @@
 # coding: utf-8
-# Author：WangTianRui
-# Date ：2021-05-21 10:19
+# Author：Rui Cao, TianRui Wang
+# Date ：2023/12/19 
 import math
 from utils.stft import *
 import dpcrn.dprnn_block as dprnn_block

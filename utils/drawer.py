@@ -1,6 +1,6 @@
 # coding: utf-8
-# Author：WangTianRui
-# Date ：2020/10/23 19:31
+# Author：Rui Cao, TianRui Wang
+# Date ：2023/12/19 
 import matplotlib.pyplot as plt
 import numpy as np
 import os, torch

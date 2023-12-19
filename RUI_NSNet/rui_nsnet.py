@@ -1,6 +1,6 @@
 # coding: utf-8
-# Author：WangTianRui
-# Date ：2020/11/22 19:20
+# Author：Rui Cao, TianRui Wang
+# Date ：2023/12/19 
 
 import torch.nn as nn
 import torch
