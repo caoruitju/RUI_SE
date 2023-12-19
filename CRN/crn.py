@@ -288,7 +288,7 @@ class CRNPLUS(nn.Module):
             self.enhance.flatten_parameters()
 
 
-        #
+        ''' Refinement'''
         self.refinement = nn.ModuleList()
         iter_num = 4
         self.iter_num = iter_num
@@ -303,7 +303,7 @@ class CRNPLUS(nn.Module):
             ))
 
 
-        ##
+        '''Underlying information extractor'''
         self.extractor = nn.Sequential(
             HarmonicAttention(in_ch=2, out_ch=6, conv_ker=self.conv_ker, u_path=r"./U_512nfft_1R.npy", n_head=n_head_num, freq_dim=self.fft_len//2,
                               integral_atten=True, CFFusion=False),
@@ -362,7 +362,9 @@ class CRNPLUS(nn.Module):
         for idx in range(self.iter_num):
             feature_input = torch.cat((feature_head, residual),dim = 1)
             refinement = self.refinement[idx](feature_input)
+            '''S-path'''
             residual = residual - refinement.detach()
+            '''A-path'''
             refinement_out = refinement_out + refinement # B,2,256,T
         refinement_out = F.pad(refinement_out, [0, 0, 0, 1], value=1e-8)
 
