@@ -183,7 +183,6 @@ class HarmonicAttention(torch.nn.Module):
         B, C, F, T = s.size()
         s_ = s.permute(0, 1, 3, 2)  # B,C,T,F
 
-        # 开始做谐波积分
         if self.integral_atten:
             ia = self.ln0(s_) 
             s_ = s_ + self.integral_attention(ia)  # B,C,T,F
