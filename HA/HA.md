@@ -31,7 +31,7 @@ The complete harmonic distribution is derived from the energy distribution of th
 
 ![compute](https://pica.zhimg.com/80/v2-8a5d2e2941718614b852fe0cd3a08824_720w.jpeg?source%3Dd16d100b)
 
-The red distribution in the figure clearly fits the current frame signal better than the green distribution, and this process (the process of calculating the fit/correlation) can be simply represented as the integration of conversation matrix $\bm{U} \in \mathbb{R}^{N_c \times F}$ and spectrogram $\bm{S} \in \mathbb{R}^{F \times T}$ : $\bm{Q} =\bm{U} \cdot \bm{S} $. 
+The red distribution in the figure clearly fits the current frame signal better than the green distribution, and this process (the process of calculating the fit/correlation) can be simply represented as the integration of conversation matrix $\mathbf{U} \in \mathbb{R}^{N_c \times F}$ and spectrogram $\mathbf{S} \in \mathbb{R}^{F \times T}$ : $\mathbf{Q} =\mathbf{U} \cdot \mathbf{S} $. 
 ## Harmonic Attention
 To ensure that the harmonic distribution (differentiable and trainable) is explicitly learned in the model, our previous work [2] proposed a Harmonic Attention mechanism, which consists of three stacked modules, i.e., convolution, harmonic integration, and frequency-channel recombination (FCR), as shown in the following figure.
 
@@ -41,28 +41,28 @@ To ensure that the harmonic distribution (differentiable and trainable) is expli
 ![HA](https://picx.zhimg.com/80/v2-8a728d8fb3afb9907cad049589e327b3_720w.png?source%3Dd16d100b)
 
 Harmonic integration is the most important part of Harmonic Attention, used to enable the model to actively capture harmonic and make structural corrections. The formulaic modeling of harmonic integration module is as follows，
-1. Use convolutional modules to process input features to adapt to the processing of the conversation matrix $\bm{Q}$, $\bm{K}$ is obtained:
+1. Use convolutional modules to process input features to adapt to the processing of the conversation matrix $\mathbf{Q}$, $\mathbf{K}$ is obtained:
 
-    $\bm{K} = \text{conv}(\text{norm}(\bm{X}_{\text{in}}^{2}))$
+    $\mathbf{K} = \text{conv}(\text{norm}(\mathbf{X}_{\text{in}}^{2}))$
 
-2. Integrate the adjusted $\bm{K}$ with the conversion matrix $\bm{Q}$ to calculate the correlation between each frame feature and the harmonic distribution corresponding to different fundamental frequencies.
+2. Integrate the adjusted $\mathbf{K}$ with the conversion matrix $\mathbf{Q}$ to calculate the correlation between each frame feature and the harmonic distribution corresponding to different fundamental frequencies.
 
-    $\bm{sig} = \bm{K} \cdot \bm{Q}^\top$
+    $\mathbf{sig} = \mathbf{K} \cdot \mathbf{Q}^\top$
 
 3. In order to make it differentiable, the Softmax operation is used instead,
 
 
-    $\bm{H} = \text{softmax}(\bm{sig}) \cdot \bm{Q}$
+    $\mathbf{H} = \text{softmax}(\mathbf{sig}) \cdot \mathbf{Q}$
 
-4. The selected harmonic distribution $\bm{Q}$ is used to guide the model in correction of harmonic structure.
+4. The selected harmonic distribution $\mathbf{Q}$ is used to guide the model in correction of harmonic structure.
 
-    $\bm{V} = \text{conv}(\bm{X}_{in})$
+    $\mathbf{V} = \text{conv}(\mathbf{X}_{in})$
 
-    $\bm{X}_\text{out} = \text{conv}\left(\bm{V} \odot \text{conv}(\bm{H})\right)$
+    $\mathbf{X}_\text{out} = \text{conv}\left(\mathbf{V} \odot \text{conv}(\mathbf{H})\right)$
 
     $\text{conv}$ and $\text{norm}$ represent convolution and frequency domain layer normalization, respectively. 
 
-Overall, the significance spectrum $\bm{sig}$ is obtained by integrating the conversion matrix $\bm{Q}$ with the normalized spectral features. The value of the significance spectrum represents the probability that the candidate fundamental frequency is the true fundamental frequency. The significance spectrum obtained through softmax is then multiplied with the conversion matrix (selecting the corresponding harmonic distribution based on confidence) to obtain the captured harmonic distribution spectrum $\bm{H}$. Finally, the predicted harmonic distribution is used to adjust the input spectrum features.
+Overall, the significance spectrum $\mathbf{sig}$ is obtained by integrating the conversion matrix $\mathbf{Q}$ with the normalized spectral features. The value of the significance spectrum represents the probability that the candidate fundamental frequency is the true fundamental frequency. The significance spectrum obtained through softmax is then multiplied with the conversion matrix (selecting the corresponding harmonic distribution based on confidence) to obtain the captured harmonic distribution spectrum $\mathbf{H}$. Finally, the predicted harmonic distribution is used to adjust the input spectrum features.
 
 ### frequency-channel Recombination
 
