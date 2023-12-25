@@ -1,4 +1,4 @@
-# A Refining Underlying Information Framework for Speech Enhancement
+# A Refining Underlying Information Framework for Monaural Speech Enhancement
 
 The official repo of "A Refining Underlying Information Framework for Speech Enhancement", which was submitted to SPL. 
 

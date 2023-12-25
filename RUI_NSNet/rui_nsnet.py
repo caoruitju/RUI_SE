@@ -268,7 +268,7 @@ class RUI_NSNet(nn.Module):
         real_result = (real * mask).permute(0, 2, 1)
         imag_result = (imag * mask).permute(0, 2, 1)
 
-        '''multiple refinement iterations'''
+        '''multiple refinement iterator'''
         refinement_out = torch.stack([real_result[:,:-1,:], imag_result[:,:-1,:]], dim= 1)
         residual = torch.stack([real_result[:,:-1,:], imag_result[:,:-1,:]], dim= 1) # B,2,F,T
         for idx in range(self.iter_num):

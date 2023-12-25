@@ -332,7 +332,7 @@ class RUI_DPCRN(nn.Module):
         real = est_mags * torch.cos(est_phase)
         imag = est_mags * torch.sin(est_phase)# B,F,T
 
-        '''multiple refinement iterations'''
+        '''multiple refinement iterator'''
         refinement_out = torch.stack([real[:,:-1,:], imag[:,:-1,:]], dim= 1)
         residual = torch.stack([real[:,:-1,:], imag[:,:-1,:]], dim= 1) # B,2,F,T
         for idx in range(self.iter_num):
