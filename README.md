@@ -15,7 +15,7 @@ After the paper is accepted, the complete training code will be open-sourced.
 
 ```txt
 @misc{cao2023refining,
-      title={A Refining Underlying Information Framework for Speech Enhancement}, 
+      title={A Refining Underlying Information Framework for Monaural Speech Enhancement}, 
       author={Rui Cao and Tianrui Wang and Meng Ge and Longbiao Wang and Jianwu Dang},
       year={2023},
       eprint={2312.11201},
